@@ -17,7 +17,12 @@ import {
 } from "vue";
 import { Geolocation } from "@capacitor/geolocation";
 import { useAppStore } from "../stores/appStore.js";
-
+import {
+  NativeSettings,
+  IOSSettings,
+  AndroidSettings,
+} from "capacitor-native-settings";
+import { Capacitor } from "@capacitor/core";
 export default {
   name: "TheMap",
 
@@ -39,13 +44,6 @@ export default {
     onMounted(async () => {
       //   const apiKey = 'YOUR_MAPTILER_API_KEY_HERE';
       // const initialState = { lng: -70.11617, lat: 43.6844, zoom: 14 };
-
-      function getCurrentPosition() {
-        Geolocation.getCurrentPosition().then((newPosition) => {
-          position.value = newPosition;
-        });
-      }
-
       const style = {
         version: 8,
         sources: {
@@ -107,10 +105,58 @@ export default {
           },
         });
 
+        // GPS SETTINGS
+        async function getCurrentPosition() {
+          try {
+            const permissionStatus = await Geolocation.checkPermissions();
+            console.log("Permission status " + permissionStatusStatus.location);
+            if (permissionStatus.location != "granted") {
+              const requestStatus = await Geolocation.requestPermissions();
+              if (requestStatus.location != "granted") {
+                // go to location settings
+                await openSettings(true);
+                return;
+              }
+            }
+
+            // if (Capacitor.getPlatform() == "android") {
+            //   this.enableGps;
+            // }
+
+            let options = {
+              maximumAge: 3000,
+              timeout: 10000,
+              enableHighAccuracy: false,
+            };
+
+            const position = await Geolocation.getCurrentPosition(options);
+          } catch (e) {
+            if (e.message) console.log(e.message);
+            await openSettings();
+          }
+          // Geolocation.getCurrentPosition().then((newPosition) => {
+          //   position.value = newPosition;
+          // });
+        }
+
+        function openSettings(app = false) {
+          console.log("Open settings ...");
+          return NativeSettings.open({
+            optionAndroid: app
+              ? AndroidSettings.ApplicationDetails
+              : AndroidSettings.Location,
+            optionIOS: app ? IOSSettings.App : IOSSettings.LocationServices,
+          });
+        }
+
+        //         async function enableGps () {
+        // const canRequest = await locationAA
+        //         }
+
         // we start listening
         geoId = Geolocation.watchPosition({}, (newPosition, err) => {
           position.value = newPosition;
-
+          console.log(newPosition);
           appStore.setPosition({
             altitude: newPosition.coords.altitude,
             accuracy: newPosition.coords.accuracy,
