@@ -1,8 +1,0 @@
-{
-  "appId": "com.example.app",
-  "appName": "mobile-app",
-  "webDir": "dist/spa",
-  "server": {
-    "androidScheme": "http"
-  }
-}
