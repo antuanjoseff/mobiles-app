@@ -1,4 +1,11 @@
 import { Geolocation } from "@capacitor/geolocation";
+import {
+  NativeSettings,
+  IOSSettings,
+  AndroidSettings,
+} from "capacitor-native-settings";
+
+// import { LocationAccuracy } from "@awesome-cordova-plugins/location-accuracy/ngx";
 
 export class GPS {
   constructor() {
@@ -19,6 +26,7 @@ export class GPS {
       this.requestStatus = await Geolocation.requestPermissions();
       if (this.requestStatus.location != "granted") {
         // go to location settings
+        await this.openSettings(true);
         return;
       }
     }
@@ -33,4 +41,23 @@ export class GPS {
     let location = await Geolocation.getCurrentPosition(this.options);
     return location != null && location != undefined ? location : undefined;
   }
+
+  openSettings(app = false) {
+    console.log("open settings...");
+    return NativeSettings.open({
+      optionAndroid: app
+        ? AndroidSettings.ApplicationDetails
+        : AndroidSettings.Location,
+      optionIOS: app ? IOSSettings.App : IOSSettings.LocationServices,
+    });
+  }
+
+  // async enableGps() {
+  //   const canRequest = await LocationAccuracy.canRequest();
+  //   if (canRequest) {
+  //     await LocationAccuracy.request(
+  //       LocationAccuracy.REQUEST_PRIORITY_HIGH_ACCURACY
+  //     );
+  //   }
+  // }
 }

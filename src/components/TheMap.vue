@@ -16,13 +16,7 @@ import {
   onBeforeUnmount,
 } from "vue";
 
-import { Geolocation } from "@capacitor/geolocation";
 import { useAppStore } from "../stores/appStore.js";
-import {
-  NativeSettings,
-  IOSSettings,
-  AndroidSettings,
-} from "capacitor-native-settings";
 import { GPS } from "../classes/GPS";
 import { centerMap, setDataLocation } from "../lib/map-utils.js";
 
@@ -114,7 +108,7 @@ export default {
         // GPS SETTINGS
         const gps = new GPS();
         await gps.checkPermission();
-
+        appStore.setMsg(gps.permissionStatus.location);
         const processTracking = async () => {
           let coords;
           console.log("in tracking " + tracking.value);

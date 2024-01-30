@@ -12,12 +12,8 @@
         />
 
         <q-toolbar-title>
-          <div v-if="position.altitude">
-            {{ position.altitude }}
-          </div>
-
-          <div v-if="position.accuracy">
-            {{ position.accuracy }}
+          <div v-if="msg">
+            {{ msg }}
           </div>
         </q-toolbar-title>
 
@@ -54,6 +50,10 @@ export default defineComponent({
     const leftDrawerOpen = ref(false);
     const appStore = useAppStore();
 
+    const msg = computed(() => {
+      return appStore.getMsg;
+    });
+
     const position = computed(() => {
       return appStore.getPosition;
     });
@@ -64,6 +64,7 @@ export default defineComponent({
 
     return {
       toggleTracking,
+      msg,
       position,
       leftDrawerOpen,
       toggleLeftDrawer() {

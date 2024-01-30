@@ -2,6 +2,7 @@ import { defineStore } from "pinia";
 
 export const useAppStore = defineStore("app", {
   state: () => ({
+    msg: "",
     tracking: true,
     position: {
       altitude: null,
@@ -12,6 +13,10 @@ export const useAppStore = defineStore("app", {
   }),
 
   getters: {
+    getMsg(state) {
+      return state.msg;
+    },
+
     getTracking(state) {
       return state.tracking;
     },
@@ -22,6 +27,10 @@ export const useAppStore = defineStore("app", {
   },
 
   actions: {
+    setMsg(msg) {
+      this.msg = msg;
+    },
+
     setTracking(tracking) {
       console.log(tracking);
       this.tracking = tracking;
