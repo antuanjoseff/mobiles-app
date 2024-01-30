@@ -1,8 +1,8 @@
 {
   "appId": "org.capacitor.quasar.app",
-  "appName": "Quasar App",
+  "appName": "Testing GPS",
   "webDir": "www",
   "server": {
     "androidScheme": "https"
   }
-}
+}aq

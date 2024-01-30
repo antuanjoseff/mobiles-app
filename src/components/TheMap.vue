@@ -15,6 +15,7 @@ import {
   markRaw,
   onBeforeUnmount,
 } from "vue";
+
 import { Geolocation } from "@capacitor/geolocation";
 import { useAppStore } from "../stores/appStore.js";
 import {
@@ -22,15 +23,20 @@ import {
   IOSSettings,
   AndroidSettings,
 } from "capacitor-native-settings";
-import { Capacitor } from "@capacitor/core";
+import { GPS } from "../classes/GPS";
+import { centerMap, setDataLocation } from "../lib/map-utils.js";
+
 export default {
   name: "TheMap",
 
   setup(props, context) {
     const appStore = useAppStore();
     const map = shallowRef(null);
+    const timeGap = 1500;
 
-    let geoId;
+    const tracking = computed(() => {
+      return appStore.getTracking;
+    });
 
     const position = computed(() => {
       return appStore.getPosition;
@@ -38,7 +44,7 @@ export default {
 
     onBeforeUnmount(() => {
       // we do cleanup
-      Geolocation.clearWatch(geoId);
+      // Geolocation.clearWatch(geoId);
     });
 
     onMounted(async () => {
@@ -106,77 +112,44 @@ export default {
         });
 
         // GPS SETTINGS
-        async function getCurrentPosition() {
-          try {
-            const permissionStatus = await Geolocation.checkPermissions();
-            console.log("Permission status " + permissionStatusStatus.location);
-            if (permissionStatus.location != "granted") {
-              const requestStatus = await Geolocation.requestPermissions();
-              if (requestStatus.location != "granted") {
-                // go to location settings
-                await openSettings(true);
-                return;
-              }
+        const gps = new GPS();
+        await gps.checkPermission();
+
+        const processTracking = async () => {
+          let coords;
+          console.log("in tracking " + tracking.value);
+          if (tracking.value) {
+            const newPosition = await gps.getCurrentPosition();
+            if (tracking.value && newPosition !== undefined) {
+              console.log(newPosition);
+              position.value = newPosition;
+              coords = newPosition.coords;
+              appStore.setPosition({
+                altitude: coords.altitude,
+                accuracy: coords.accuracy,
+                latitude: coords.latitude,
+                longitude: coords.longitude,
+              });
+
+              const data = setDataLocation(coords);
+              map.value.getSource("trace").setData(data);
+              centerMap(map, coords);
             }
-
-            // if (Capacitor.getPlatform() == "android") {
-            //   this.enableGps;
-            // }
-
-            let options = {
-              maximumAge: 3000,
-              timeout: 10000,
-              enableHighAccuracy: false,
-            };
-
-            const position = await Geolocation.getCurrentPosition(options);
-          } catch (e) {
-            if (e.message) console.log(e.message);
-            await openSettings();
+            setTimeout(processTracking, timeGap);
           }
-          // Geolocation.getCurrentPosition().then((newPosition) => {
-          //   position.value = newPosition;
-          // });
+        };
+
+        if (gps.permissionStatus.location != "granted") {
+          alert("Permission not granted");
+          return;
+        } else {
+          processTracking();
         }
 
-        function openSettings(app = false) {
-          console.log("Open settings ...");
-          return NativeSettings.open({
-            optionAndroid: app
-              ? AndroidSettings.ApplicationDetails
-              : AndroidSettings.Location,
-            optionIOS: app ? IOSSettings.App : IOSSettings.LocationServices,
-          });
-        }
-
-        //         async function enableGps () {
-        // const canRequest = await locationAA
-        //         }
-
-        // we start listening
-        geoId = Geolocation.watchPosition({}, (newPosition, err) => {
-          position.value = newPosition;
-          console.log(newPosition);
-          appStore.setPosition({
-            altitude: newPosition.coords.altitude,
-            accuracy: newPosition.coords.accuracy,
-            latitude: newPosition.coords.latitude,
-            longitude: newPosition.coords.longitude,
-          });
-        });
-
-        watch(position, (cur, old) => {
-          if (map.value) {
-            let data = {
-              type: "Feature",
-              geometry: {
-                type: "Point",
-                coordinates: [cur.longitude, cur.latitude],
-              },
-            };
-
-            map.value.getSource("trace").setData(data);
-            map.value.setCenter([cur.longitude, cur.latitude]);
+        watch(tracking, (cur, old) => {
+          console.log(cur);
+          if (cur) {
+            processTracking();
           }
         });
       });
@@ -184,6 +157,7 @@ export default {
 
     return {
       map,
+      tracking,
     };
   },
 };
