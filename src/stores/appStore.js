@@ -2,7 +2,7 @@ import { defineStore } from "pinia";
 
 export const useAppStore = defineStore("app", {
   state: () => ({
-    msg: "",
+    msg: "Hola mundo!!!",
     tracking: true,
     position: {
       altitude: null,

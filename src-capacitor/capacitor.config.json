@@ -1,9 +1,9 @@
 {
   "appId": "org.capacitor.quasar.app",
   "appName": "Quasar App",
-  "webDir": "www",
+  "webDir": "dist/spa",
   "server": {
     "androidScheme": "https",
-    "url": "http://192.168.43.112:9500"
+    "url": "http://84.88.143.14:9500"
   }
 }

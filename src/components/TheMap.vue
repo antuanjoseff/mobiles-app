@@ -70,8 +70,8 @@ export default {
           renderWorldCopies: false,
           // style: "estils_mapa_base.json",
           style: style,
-          center: [2.18, 41.15],
-          zoom: 18,
+          center: [2.8, 41.95],
+          zoom: 14,
           maxZoom: 22,
         })
       );
@@ -85,7 +85,7 @@ export default {
           type: "Feature",
           geometry: {
             type: "Point",
-            coordinates: [2.18, 42.15],
+            coordinates: [2.8, 41.95],
           },
           properties: {
             name: "My position",
@@ -106,46 +106,46 @@ export default {
         });
 
         // GPS SETTINGS
-        const gps = new GPS();
-        await gps.checkPermission();
-        appStore.setMsg(gps.permissionStatus.location);
-        const processTracking = async () => {
-          let coords;
-          console.log("in tracking " + tracking.value);
-          if (tracking.value) {
-            const newPosition = await gps.getCurrentPosition();
-            if (tracking.value && newPosition !== undefined) {
-              console.log(newPosition);
-              position.value = newPosition;
-              coords = newPosition.coords;
-              appStore.setPosition({
-                altitude: coords.altitude,
-                accuracy: coords.accuracy,
-                latitude: coords.latitude,
-                longitude: coords.longitude,
-              });
+        // const gps = new GPS();
+        // await gps.checkPermission();
+        // appStore.setMsg(gps.permissionStatus.location);
+        // const processTracking = async () => {
+        //   let coords;
+        //   console.log("in tracking " + tracking.value);
+        //   if (tracking.value) {
+        //     const newPosition = await gps.getCurrentPosition();
+        //     if (tracking.value && newPosition !== undefined) {
+        //       console.log(newPosition);
+        //       position.value = newPosition;
+        //       coords = newPosition.coords;
+        //       appStore.setPosition({
+        //         altitude: coords.altitude,
+        //         accuracy: coords.accuracy,
+        //         latitude: coords.latitude,
+        //         longitude: coords.longitude,
+        //       });
 
-              const data = setDataLocation(coords);
-              map.value.getSource("trace").setData(data);
-              centerMap(map, coords);
-            }
-            setTimeout(processTracking, timeGap);
-          }
-        };
+        //       const data = setDataLocation(coords);
+        //       map.value.getSource("trace").setData(data);
+        //       centerMap(map, coords);
+        //     }
+        //     setTimeout(processTracking, timeGap);
+        //   }
+        // };
 
-        if (gps.permissionStatus.location != "granted") {
-          alert("Permission not granted");
-          return;
-        } else {
-          processTracking();
-        }
+        // if (gps.permissionStatus.location != "granted") {
+        //   alert("Permission not granted");
+        //   return;
+        // } else {
+        //   processTracking();
+        // }
 
-        watch(tracking, (cur, old) => {
-          console.log(cur);
-          if (cur) {
-            processTracking();
-          }
-        });
+        // watch(tracking, (cur, old) => {
+        //   console.log(cur);
+        //   if (cur) {
+        //     processTracking();
+        //   }
+        // });
       });
     });
 
