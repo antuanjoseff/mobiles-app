@@ -33,11 +33,10 @@ export class GPS {
   }
 
   async getCurrentPosition() {
-    if (this.permissionStatus.location != "granted") {
-      console.log("Gps permissions not granted");
-      return;
-    }
-
+    // if (this.permissionStatus.location != "granted") {
+    //   console.log("Gps permissions not granted");
+    //   return;
+    // }
     let location = await Geolocation.getCurrentPosition(this.options);
     return location != null && location != undefined ? location : undefined;
   }

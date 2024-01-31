@@ -17,6 +17,8 @@ import {
 } from "vue";
 
 import { useAppStore } from "../stores/appStore.js";
+import { Geolocation } from "@capacitor/geolocation";
+import { Capacitor } from "@capacitor/core";
 import { GPS } from "../classes/GPS";
 import { centerMap, setDataLocation } from "../lib/map-utils.js";
 
@@ -32,9 +34,10 @@ export default {
       return appStore.getTracking;
     });
 
-    const position = computed(() => {
-      return appStore.getPosition;
-    });
+    const position = ref();
+    // const position = computed(() => {
+    //   return appStore.getPosition;
+    // });
 
     onBeforeUnmount(() => {
       // we do cleanup
@@ -76,10 +79,6 @@ export default {
         })
       );
 
-      var tilesUrl = process.env.DEV
-        ? "http://localhost:9000/countries/{z}/{x}/{y}.pbf"
-        : "https://mapscloud.udg.edu/tesis/countries/{z}/{x}/{y}.pbf";
-
       map.value.once("load", async () => {
         const myLocation = {
           type: "Feature",
@@ -105,47 +104,66 @@ export default {
           },
         });
 
-        // GPS SETTINGS
-        // const gps = new GPS();
-        // await gps.checkPermission();
-        // appStore.setMsg(gps.permissionStatus.location);
-        // const processTracking = async () => {
-        //   let coords;
-        //   console.log("in tracking " + tracking.value);
-        //   if (tracking.value) {
-        //     const newPosition = await gps.getCurrentPosition();
-        //     if (tracking.value && newPosition !== undefined) {
-        //       console.log(newPosition);
-        //       position.value = newPosition;
-        //       coords = newPosition.coords;
-        //       appStore.setPosition({
-        //         altitude: coords.altitude,
-        //         accuracy: coords.accuracy,
-        //         latitude: coords.latitude,
-        //         longitude: coords.longitude,
-        //       });
-
-        //       const data = setDataLocation(coords);
-        //       map.value.getSource("trace").setData(data);
-        //       centerMap(map, coords);
-        //     }
-        //     setTimeout(processTracking, timeGap);
-        //   }
-        // };
-
-        // if (gps.permissionStatus.location != "granted") {
-        //   alert("Permission not granted");
-        //   return;
-        // } else {
-        //   processTracking();
-        // }
-
-        // watch(tracking, (cur, old) => {
-        //   console.log(cur);
-        //   if (cur) {
-        //     processTracking();
-        //   }
+        let options = {
+          maximumAge: 3000,
+          timeout: 10000,
+          enableHighAccuracy: false,
+        };
+        // Geolocation.getCurrentPosition(options).then((newPosition) => {
+        //   console.log("Current", newPosition);
+        //   position.value = newPosition;
         // });
+
+        // navigator.permissions.query({ name: "geolocation" }).then(console.log);
+
+        const processTracking = async () => {
+          let coords;
+          if (tracking.value) {
+            console.log("in tracking " + tracking.value);
+            const newPosition = await gps.getCurrentPosition();
+            if (tracking.value && newPosition !== undefined) {
+              console.log(newPosition);
+              position.value = newPosition;
+              coords = newPosition.coords;
+              appStore.setPosition({
+                altitude: coords.altitude,
+                accuracy: coords.accuracy,
+                latitude: coords.latitude,
+                longitude: coords.longitude,
+              });
+
+              const data = setDataLocation(coords);
+              map.value.getSource("trace").setData(data);
+              centerMap(map, coords);
+              setTimeout(processTracking, timeGap);
+            }
+            // setTimeout(processTracking, timeGap);
+          }
+        };
+
+        // GPS SETTINGS
+        const gps = new GPS();
+        if (Capacitor.isNativePlatform()) {
+          // do something
+          await gps.checkPermission();
+
+          appStore.setMsg(gps.permissionStatus.location);
+          if (gps.permissionStatus.location != "granted") {
+            alert("Permission not granted");
+            return;
+          } else {
+            processTracking();
+          }
+        } else {
+          processTracking();
+        }
+
+        watch(tracking, (cur, old) => {
+          console.log(cur);
+          if (cur) {
+            processTracking();
+          }
+        });
       });
     });
 
