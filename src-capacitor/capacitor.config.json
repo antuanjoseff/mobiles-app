@@ -4,6 +4,6 @@
   "webDir": "dist/spa",
   "server": {
     "androidScheme": "https",
-    "url": "http://84.88.143.14:9500"
+    "url": "http://192.168.1.70:9500"
   }
 }

@@ -12,6 +12,11 @@
         />
 
         <q-toolbar-title>
+          <div v-if="position">
+            <div v-if="position.altitude">
+              {{ parseInt(position.altitude) }}m
+            </div>
+          </div>
           <div v-if="msg">
             {{ msg }}
           </div>

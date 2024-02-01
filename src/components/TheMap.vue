@@ -115,7 +115,7 @@ export default {
         // });
 
         // navigator.permissions.query({ name: "geolocation" }).then(console.log);
-
+        let loop = 0;
         const processTracking = async () => {
           let coords;
           if (tracking.value) {
@@ -135,7 +135,10 @@ export default {
               const data = setDataLocation(coords);
               map.value.getSource("trace").setData(data);
               centerMap(map, coords);
-              setTimeout(processTracking, timeGap);
+              if (loop < 1) {
+                loop += 1;
+                setTimeout(processTracking, timeGap);
+              }
             }
             // setTimeout(processTracking, timeGap);
           }
@@ -144,12 +147,16 @@ export default {
         // GPS SETTINGS
         const gps = new GPS();
         if (Capacitor.isNativePlatform()) {
-          // do something
+          console.log(Capacitor.getPlatform());
           await gps.checkPermission();
-
+          if (!gps.enabled) {
+            if (confirm("Need to activate the GPS")) {
+              await gps.openSettings();
+              // await gps.readGpsPermission()
+            }
+          }
           appStore.setMsg(gps.permissionStatus.location);
           if (gps.permissionStatus.location != "granted") {
-            alert("Permission not granted");
             return;
           } else {
             processTracking();

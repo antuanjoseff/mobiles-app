@@ -37,6 +37,7 @@ export const useAppStore = defineStore("app", {
     },
 
     setPosition(position) {
+      console.log("Set position");
       this.position = position;
     },
   },

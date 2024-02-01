@@ -12,6 +12,8 @@ export class GPS {
     this.requestStatus = null;
     this.permissionStatus = null;
     this.position = null;
+    this.enabled = true;
+    this.granted = true;
     this.options = {
       maximumAge: 3000,
       timeout: 10000,
@@ -19,16 +21,34 @@ export class GPS {
     };
   }
 
+  async readGpsPermission() {
+    try {
+      this.permissionStatus = await Geolocation.checkPermissions();
+    } catch (err) {
+      if (err.message == "Location services are not enabled") {
+        this.enabled = false;
+      }
+      return;
+    }
+    this.granted = this.permissionStatus.location == "granted";
+  }
+
   async checkPermission() {
-    this.permissionStatus = await Geolocation.checkPermissions();
-    console.log("Permission status " + this.permissionStatus.location);
+    await this.readGpsPermission();
+
+    if (!this.enabled) {
+      this.granted = false;
+      return;
+    }
+
     if (this.permissionStatus.location != "granted") {
       this.requestStatus = await Geolocation.requestPermissions();
-      if (this.requestStatus.location != "granted") {
-        // go to location settings
-        await this.openSettings(true);
-        return;
-      }
+
+      // if (this.requestStatus.location != "granted") {
+      //   // go to location settings
+      //   await this.openSettings(true);
+      //   return;
+      // }
     }
   }
 
@@ -41,14 +61,15 @@ export class GPS {
     return location != null && location != undefined ? location : undefined;
   }
 
-  openSettings(app = false) {
-    console.log("open settings...");
-    return NativeSettings.open({
+  async openSettings(app = false) {
+    alert("open settings...");
+    await NativeSettings.open({
       optionAndroid: app
         ? AndroidSettings.ApplicationDetails
         : AndroidSettings.Location,
       optionIOS: app ? IOSSettings.App : IOSSettings.LocationServices,
     });
+    await this.readGpsPermission();
   }
 
   // async enableGps() {
