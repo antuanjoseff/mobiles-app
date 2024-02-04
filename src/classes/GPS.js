@@ -1,4 +1,5 @@
 import { Geolocation } from "@capacitor/geolocation";
+
 import {
   NativeSettings,
   IOSSettings,
@@ -12,7 +13,7 @@ export class GPS {
     this.requestStatus = null;
     this.permissionStatus = null;
     this.position = null;
-    this.enabled = true;
+    this.gpsEnabled = true;
     this.granted = true;
     this.options = {
       maximumAge: 3000,
@@ -26,7 +27,7 @@ export class GPS {
       this.permissionStatus = await Geolocation.checkPermissions();
     } catch (err) {
       if (err.message == "Location services are not enabled") {
-        this.enabled = false;
+        this.gpsEnabled = false;
       }
       return;
     }
@@ -36,33 +37,22 @@ export class GPS {
   async checkPermission() {
     await this.readGpsPermission();
 
-    if (!this.enabled) {
+    if (!this.gpsEnabled) {
       this.granted = false;
       return;
     }
 
     if (this.permissionStatus.location != "granted") {
       this.requestStatus = await Geolocation.requestPermissions();
-
-      // if (this.requestStatus.location != "granted") {
-      //   // go to location settings
-      //   await this.openSettings(true);
-      //   return;
-      // }
     }
   }
 
   async getCurrentPosition() {
-    // if (this.permissionStatus.location != "granted") {
-    //   console.log("Gps permissions not granted");
-    //   return;
-    // }
     let location = await Geolocation.getCurrentPosition(this.options);
     return location != null && location != undefined ? location : undefined;
   }
 
   async openSettings(app = false) {
-    alert("open settings...");
     await NativeSettings.open({
       optionAndroid: app
         ? AndroidSettings.ApplicationDetails
@@ -71,13 +61,4 @@ export class GPS {
     });
     await this.readGpsPermission();
   }
-
-  // async enableGps() {
-  //   const canRequest = await LocationAccuracy.canRequest();
-  //   if (canRequest) {
-  //     await LocationAccuracy.request(
-  //       LocationAccuracy.REQUEST_PRIORITY_HIGH_ACCURACY
-  //     );
-  //   }
-  // }
 }

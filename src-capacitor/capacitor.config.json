@@ -3,7 +3,9 @@
   "appName": "Quasar App",
   "webDir": "dist/spa",
   "server": {
-    "androidScheme": "https",
-    "url": "http://192.168.1.70:9500"
+    "androidScheme": "https"
+  },
+  "android": {
+    "useLegacyBridge": true
   }
 }

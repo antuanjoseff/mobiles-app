@@ -15,11 +15,11 @@ import {
   markRaw,
   onBeforeUnmount,
 } from "vue";
-
+import { registerPlugin } from "@capacitor/core";
 import { useAppStore } from "../stores/appStore.js";
-import { Geolocation } from "@capacitor/geolocation";
 import { Capacitor } from "@capacitor/core";
 import { GPS } from "../classes/GPS";
+import { Track } from "../classes/Track";
 import { centerMap, setDataLocation } from "../lib/map-utils.js";
 
 export default {
@@ -79,6 +79,7 @@ export default {
         })
       );
 
+      const track = new Track();
       map.value.once("load", async () => {
         const myLocation = {
           type: "Feature",
@@ -92,7 +93,9 @@ export default {
         };
 
         // add it to the map
+
         map.value.addSource("trace", { type: "geojson", data: myLocation });
+        map.value.addSource("track", { type: "geojson", data: track.geojson });
 
         map.value.addLayer({
           id: "trace",
@@ -104,15 +107,21 @@ export default {
           },
         });
 
+        map.value.addLayer({
+          id: "track",
+          source: "track",
+          type: "line",
+          paint: {
+            "line-color": "orange",
+            "line-width": 2,
+          },
+        });
+
         let options = {
           maximumAge: 3000,
           timeout: 10000,
           enableHighAccuracy: false,
         };
-        // Geolocation.getCurrentPosition(options).then((newPosition) => {
-        //   console.log("Current", newPosition);
-        //   position.value = newPosition;
-        // });
 
         // navigator.permissions.query({ name: "geolocation" }).then(console.log);
         let loop = 0;
@@ -122,7 +131,6 @@ export default {
             console.log("in tracking " + tracking.value);
             const newPosition = await gps.getCurrentPosition();
             if (tracking.value && newPosition !== undefined) {
-              console.log(newPosition);
               position.value = newPosition;
               coords = newPosition.coords;
               appStore.setPosition({
@@ -145,32 +153,81 @@ export default {
         };
 
         // GPS SETTINGS
-        const gps = new GPS();
-        if (Capacitor.isNativePlatform()) {
-          console.log(Capacitor.getPlatform());
-          await gps.checkPermission();
-          if (!gps.enabled) {
-            if (confirm("Need to activate the GPS")) {
-              await gps.openSettings();
-              // await gps.readGpsPermission()
-            }
-          }
-          appStore.setMsg(gps.permissionStatus.location);
-          if (gps.permissionStatus.location != "granted") {
-            return;
-          } else {
-            processTracking();
-          }
-        } else {
-          processTracking();
-        }
+        // const gps = new GPS();
+        // if (Capacitor.isNativePlatform()) {
+        //   console.log(Capacitor.getPlatform());
+        //   await gps.checkPermission();
+        //   if (!gps.gpsEnabled) {
+        //     if (confirm("Need to activate the GPS")) {
+        //       await gps.openSettings();
+        //     }
+        //   }
+        //   appStore.setMsg(gps.permissionStatus.location);
+        //   if (gps.permissionStatus.location != "granted") {
+        //     return;
+        //   } else {
+        //     processTracking();
+        //   }
+        // } else {
+        //   processTracking();
+        // }
 
-        watch(tracking, (cur, old) => {
-          console.log(cur);
-          if (cur) {
-            processTracking();
+        // watch(tracking, (cur, old) => {
+        //   console.log(cur);
+        //   if (cur) {
+        //     processTracking();
+        //   }
+        // });
+      });
+      const BackgroundGeolocation = registerPlugin("BackgroundGeolocation");
+
+      BackgroundGeolocation.addWatcher(
+        {
+          backgroundMessage: "Cancel to prevent battery drain.",
+          backgroundTitle: "Tracking You.",
+          requestPermissions: true,
+          stale: false,
+          distanceFilter: 10,
+        },
+        function callback(location, error) {
+          if (error) {
+            console.log(error);
+            if (error.code === "NOT_AUTHORIZED") {
+              if (
+                window.confirm(
+                  "This app needs your location, " +
+                    "but does not have permission.\n\n" +
+                    "Open settings now?"
+                )
+              ) {
+                // It can be useful to direct the user to their device's
+                // settings when location permissions have been denied. The
+                // plugin provides the 'openSettings' method to do exactly
+                // this.
+                // BackgroundGeolocation.openSettings();
+                const gps = new GPS();
+                gps.openSettings();
+              }
+            }
+
+            return console.error(error);
           }
-        });
+          track.addCoords(location);
+          map.value.getSource("track").setData(track.geojson);
+
+          const data = setDataLocation(location.longitude, location.latitude);
+
+          map.value.getSource("trace").setData(data);
+          centerMap(map, location.longitude, location.latitude);
+
+          return console.log(location);
+        }
+      ).then(function after_the_watcher_has_been_added(watcher_id) {
+        // When a watcher is no longer needed, it should be removed by calling
+        // 'removeWatcher' with an object containing its ID.
+        // BackgroundGeolocation.removeWatcher({
+        //   id: watcher_id,
+        // });
       });
     });
 

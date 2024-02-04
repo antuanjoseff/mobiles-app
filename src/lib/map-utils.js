@@ -1,8 +1,8 @@
-function centerMap(map, coords) {
-  map.value.setCenter([coords.longitude, coords.latitude]);
+function centerMap(map, longitude, latitude) {
+  map.value.setCenter([longitude, latitude]);
 }
 
-function setDataLocation({ longitude, latitude }) {
+function setDataLocation(longitude, latitude) {
   return {
     type: "Feature",
     geometry: {
