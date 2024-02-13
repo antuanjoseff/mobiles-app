@@ -41,8 +41,11 @@
 
 <script>
 import { useAppStore } from "../stores/appStore.js";
-import { computed, defineComponent, ref } from "vue";
+import { computed, defineComponent, ref, onMounted } from "vue";
 import TheMap from "components/TheMap.vue";
+import { Capacitor } from "@capacitor/core";
+import { BatteryOptimization } from "@capawesome-team/capacitor-android-battery-optimization";
+import { ForegroundService } from "@capawesome-team/capacitor-android-foreground-service";
 
 export default defineComponent({
   name: "MainLayout",
@@ -66,6 +69,51 @@ export default defineComponent({
     const toggleTracking = () => {
       appStore.setTracking(!appStore.getTracking);
     };
+
+    onMounted(async () => {
+      const isBatteryOptimizationEnabled = async () => {
+        if (Capacitor.getPlatform() !== "android") {
+          return false;
+        }
+        const { enabled } =
+          await BatteryOptimization.isBatteryOptimizationEnabled();
+        return enabled;
+      };
+
+      const openBatteryOptimizationSettings = async () => {
+        if (Capacitor.getPlatform() !== "android") {
+          return;
+        }
+        await BatteryOptimization.openBatteryOptimizationSettings();
+      };
+
+      const requestIgnoreBatteryOptimization = async () => {
+        if (Capacitor.getPlatform() !== "android") {
+          return;
+        }
+        await BatteryOptimization.requestIgnoreBatteryOptimization();
+      };
+
+      // if (await isBatteryOptimizationEnabled()) {
+      //   openBatteryOptimizationSettings();
+      // }
+
+      const startForegroundService = async () => {
+        if (Capacitor.getPlatform() !== "android") {
+          return false;
+        }
+        await ForegroundService.startForegroundService();
+      };
+
+      const stopForegroundService = async () => {
+        if (Capacitor.getPlatform() !== "android") {
+          return false;
+        }
+        await ForegroundService.stopForegroundService();
+      };
+
+      startForegroundService("hola", "mundo");
+    });
 
     return {
       toggleTracking,

@@ -52,6 +52,12 @@ export class GPS {
     return location != null && location != undefined ? location : undefined;
   }
 
+  async openBatterySettings(app = false) {
+    await NativeSettings.open({
+      optionAndroid: AndroidSettings.BatteryOptimization,
+    });
+  }
+
   async openSettings(app = false) {
     await NativeSettings.open({
       optionAndroid: app

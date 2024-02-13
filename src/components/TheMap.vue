@@ -21,6 +21,7 @@ import { Capacitor } from "@capacitor/core";
 import { GPS } from "../classes/GPS";
 import { Track } from "../classes/Track";
 import { centerMap, setDataLocation } from "../lib/map-utils.js";
+import "maplibre-gl/dist/maplibre-gl.css";
 
 export default {
   name: "TheMap",
@@ -79,6 +80,8 @@ export default {
         })
       );
 
+      let nav = new NavigationControl();
+
       const track = new Track();
       map.value.once("load", async () => {
         const myLocation = {
@@ -93,7 +96,7 @@ export default {
         };
 
         // add it to the map
-
+        map.value.addControl(nav, "top-left");
         map.value.addSource("trace", { type: "geojson", data: myLocation });
         map.value.addSource("track", { type: "geojson", data: track.geojson });
 
@@ -179,6 +182,11 @@ export default {
         //   }
         // });
       });
+
+      if (!Capacitor.isNativePlatform()) {
+        return;
+      }
+
       const BackgroundGeolocation = registerPlugin("BackgroundGeolocation");
 
       BackgroundGeolocation.addWatcher(
@@ -206,14 +214,16 @@ export default {
                 // this.
                 // BackgroundGeolocation.openSettings();
                 const gps = new GPS();
+                gps.openBatterySettings();
                 gps.openSettings();
               }
             }
 
             return console.error(error);
           }
+          console.log(location);
           track.addCoords(location);
-          map.value.getSource("track").setData(track.geojson);
+          // map.value.getSource("track").setData(track.geojson);
 
           const data = setDataLocation(location.longitude, location.latitude);
 
